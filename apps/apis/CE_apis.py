@@ -17,8 +17,6 @@ CE_parser.add_argument('Flag',
                        location=['form', 'args'])
 CE_parser.add_argument('c2',
                        type=str,
-                       required=True,
-                       help='Must provide the c2',
                        location=['form', 'args'])
 
 class CESecureCommunicationWithMHApi(Resource):
