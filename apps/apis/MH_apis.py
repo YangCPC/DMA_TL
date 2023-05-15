@@ -48,7 +48,8 @@ MH_parser.add_argument('DMi',
 MH_parser.add_argument('Flag',
                        type=str,
                        required=True,
-                       help='Must provide the Flag',
+                       help='Must provide the Flag (Flag=0: MH generates c2;'
+                            'Flag=1, MH receives (r1, t2) from CE)',
                        location=['args', 'form'])
 MH_parser.add_argument('r1',
                        type=str,
@@ -67,8 +68,9 @@ class MHSecureCommunicationWithCEApi(Resource):
 
         # flag == "0", MH will send c2 to CE
         if flag == "0":
-            # the nonce
-            # nonce = nonce_generation()
+            # passwordSalt_value, iv_value and nonce should be received from EMGWAM. Please replace them.
+            passwordSalt_value = b'a#\xa1\xbe\r\xe4^\x06,a\xeeZ\x91\xfc\xf3j'
+            iv_value = 90603373939604955465082505548528970619254170524234007075663211789259246989110
             nonce = 'ymNIaotdN3EQPMHpl+gZTkhYNQqGu7eHUG+MBAIbfOE='
 
             # generate a random number r1
@@ -87,7 +89,7 @@ class MHSecureCommunicationWithCEApi(Resource):
             # generate a message m2
             m2 = str(r1) + ' ' + t2 + ' ' + str(DMi) + ' ' + H2
             # obtain c2
-            encryptor = SymmetricEncryption()
+            encryptor = SymmetricEncryption(passwordSalt_value, iv_value)
             c2 = encryptor.encryption(m2, nonce)
 
             # Create an instance for MHSecureCommunicationWithCEParams
@@ -97,7 +99,6 @@ class MHSecureCommunicationWithCEApi(Resource):
             params.DMi = DMi
             params.H2 = H2
             params.m2 = m2
-            # params.c2 = binascii.hexlify(c2).decode('utf-8')
             params.c2 = c2
             # Storage the params into the db
             db.session.add(params)

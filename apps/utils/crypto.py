@@ -16,17 +16,20 @@ def nonce_generation():
 # It is considered highly secure and collision resistance for most applications.
 def H2_hash_function(temp):
     res = hashlib.sha512(temp.encode('utf-8')).hexdigest()
-
     return res
+
+# As AES CTR Block Mode is used in DMA.TL,
+# so passwordSalt and IV need to be initialized by EMGWAM before sharing them with MH and CE.
+def passwordSaltAndiv_generation():
+    passwordSalt_value = os.urandom(16)
+    iv_value = secrets.randbits(256)
+    return passwordSalt_value, iv_value
 
 # Encryptor
 class SymmetricEncryption(object):
-    def __init__(self):
-        # self.passwordSalt = os.urandom(16)
-        # self.iv = secrets.randbits(256)
-        self.passwordSalt = b'"k\x1asV\xac67\xd8\n\'\x8c\xa48B\xf1'
-        self.iv = 61661271473775212356602068528112630478399302202911140582284521798026533363744
-
+    def __init__(self, passwordSalt_value, iv_value):
+        self.passwordSalt = passwordSalt_value
+        self.iv = iv_value
 
     def encryption(self, msg, password):
         key = pbkdf2.PBKDF2(password, self.passwordSalt).read(32)

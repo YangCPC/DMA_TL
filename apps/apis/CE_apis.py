@@ -12,8 +12,8 @@ CE_parser = reqparse.RequestParser()
 CE_parser.add_argument('Flag',
                        type=str,
                        required=True,
-                       help='Must provide the Flag (Flag=1: CE starts the conversation with MH;'
-                            'Flag=0, CE receives c2 from MH)',
+                       help='Must provide the Flag (Flag=0: CE starts the conversation with MH;'
+                            'Flag=1, CE receives c2 from MH)',
                        location=['form', 'args'])
 CE_parser.add_argument('c2',
                        type=str,
@@ -40,11 +40,15 @@ class CESecureCommunicationWithMHApi(Resource):
         # flag == "1", CE will receive the c2 from MH and then decrypt c2 as m2 in order to get (r1, t2)
         if flag == "1":
             c2 = args.get('c2')
-            print('c2: ', c2)
             c2 = binascii.unhexlify(c2.encode('utf-8'))
-            encryptor = SymmetricEncryption()
-            nounce = 'ymNIaotdN3EQPMHpl+gZTkhYNQqGu7eHUG+MBAIbfOE='
-            m2 = encryptor.decryption(c2, nounce).decode('utf-8')
+
+            # passwordSalt_value, iv_value and nonce should be received from EMGWAM. Please replace them.
+            passwordSalt_value = b'a#\xa1\xbe\r\xe4^\x06,a\xeeZ\x91\xfc\xf3j'
+            iv_value = 90603373939604955465082505548528970619254170524234007075663211789259246989110
+            nonce = 'ymNIaotdN3EQPMHpl+gZTkhYNQqGu7eHUG+MBAIbfOE='
+
+            encryptor = SymmetricEncryption(passwordSalt_value, iv_value)
+            m2 = encryptor.decryption(c2, nonce).decode('utf-8')
             # m2 = str(r1) + ' ' + str(t2) + ' ' + str(DMi) + ' ' + H2
             m2_list = m2.split(' ')
             # r1
@@ -61,6 +65,7 @@ class CESecureCommunicationWithMHApi(Resource):
             temp = r1 + t2 + DMi
             res = H2_hash_function(temp)
 
+            # message integrity check
             if res == H2:
                 data = {
                     "status": 200,
